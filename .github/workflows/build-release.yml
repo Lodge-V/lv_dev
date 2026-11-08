@@ -21,8 +21,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: web/package-lock.json
 
       - name: Install dependencies
         working-directory: web
@@ -35,7 +33,7 @@ jobs:
       - name: Package FiveM resource
         run: |
           mkdir -p release
-          zip -r release/lv_dev-${GITHUB_REF_NAME}.zip . \
+          zip -r release/lv_dev.zip . \
             -x '.git/*' 'web/node_modules/*' 'web/src/*' 'web/package-lock.json'
 
       - name: Upload build artifact
