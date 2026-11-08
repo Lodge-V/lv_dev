@@ -2,6 +2,8 @@
 -- Gemeinsame CRUD-Callbacks fuer die konfigurierbaren Verwaltungsbereiche.
 -- SQL-Tabellen und Feldnamen stammen ausschliesslich aus dieser festen Definition.
 
+local ESX = exports['es_extended']:getSharedObject()
+
 local Modules = {
     blipscreator = {
         table = 'lv_dev_blips',
@@ -274,7 +276,6 @@ end
 
 CreateThread(function()
     while GetResourceState('es_extended') ~= 'started' do Wait(250) end
-    local ESX = exports['es_extended']:getSharedObject()
     for moduleName, definition in pairs(Modules) do
         registerModule(moduleName, definition)
     end
