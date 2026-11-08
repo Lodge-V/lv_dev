@@ -33,18 +33,19 @@ jobs:
       - name: Package FiveM resource
         run: |
           mkdir -p release
-          zip -r release/lv_dev.zip . \
-            -x '.git/*' 'web/node_modules/*' 'web/src/*' 'web/package-lock.json'
+          zip -r /tmp/lv_dev.zip . \
+            -x '.git/*' 'web/node_modules/*' 'web/src/*' 'web/package-lock.json' 'release/*'
+          mv /tmp/lv_dev.zip release/lv_dev.zip
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: lv_dev-resource
-          path: release/lv_dev-${GITHUB_REF_NAME}.zip
+          path: release/lv_dev.zip
 
       - name: Publish GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
-          files: release/lv_dev-${GITHUB_REF_NAME}.zip
+          files: release/lv_dev.zip
