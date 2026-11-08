@@ -1,0 +1,55 @@
+
+name: Build and Release lv_dev
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build FiveM Resource
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install NUI Dependencies
+        working-directory: web
+        run: npm install
+
+      - name: Build NUI
+        working-directory: web
+        run: npm run build
+
+      - name: Package Resource
+        run: |
+          mkdir -p release/package/lv_dev
+
+          rsync -a ./ release/package/lv_dev/ \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='node_modules' \
+            --exclude='src' \
+            --exclude='package.json' \
+            --exclude='package-lock.json' \
+            --exclude='tsconfig.json' \
+            --exclude='vite.config.ts'
+
+          cd release/package
+
+          zip -r "../lv_dev-${GITHUB_REF_NAME}.zip" lv_dev
+
+      - name: Upload Release ZIP
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*.zip
+          fail_on_unmatched_files: true
