@@ -1,4 +1,4 @@
-# lv_dev – Version 0.2.0
+# lv_dev – Version 0.3.0
 
 Zentrales Verwaltungsframework fuer Lodge V (FiveM / ESX Legacy).
 
@@ -8,11 +8,11 @@ Zentrales Verwaltungsframework fuer Lodge V (FiveM / ESX Legacy).
 - MariaDB / MySQL
 - `oxmysql` und `es_extended` muessen vor `lv_dev` gestartet werden
 
-## Update von 0.1.0 auf 0.2.0
+## Installation / Update
 
 1. Bestehenden Ressourcenordner sichern.
-2. Neue Dateien aus diesem Paket in den Ressourcenordner uebernehmen.
-3. `sql/schema.sql` einmalig in der Lodge-V-Datenbank importieren.
+2. Dateien aus dem Release-Paket in den Ressourcenordner uebernehmen.
+3. `sql/schema.sql` einmalig in der Lodge-V-Datenbank importieren (bei einem Update nicht erneut erforderlich, wenn das Schema bereits vollstaendig angelegt wurde).
 4. In der `server.cfg` die Startreihenfolge sicherstellen:
 
    ```cfg
@@ -22,11 +22,9 @@ Zentrales Verwaltungsframework fuer Lodge V (FiveM / ESX Legacy).
    ```
 
 5. Server neu starten oder `restart lv_dev` ausfuehren.
-6. Konsole pruefen. Bei fehlenden Tabellen nennt `lv_dev` die betroffenen Tabellennamen.
+6. Konsole auf Datenbank- und Callback-Meldungen pruefen.
 
 ## ACE-Rechte
-
-Die vorhandenen ACE-Rechte aus der bisherigen Version bleiben bestehen:
 
 ```cfg
 add_ace group.developer lv_dev.all allow
@@ -39,19 +37,76 @@ add_ace group.developer lv_dev.teleport allow
 add_ace group.developer lv_dev.klingel allow
 ```
 
-`lv_dev.all` gewaehrt Zugriff auf alle Module. Die konkreten Gruppen muessen an die bestehende Lodge-V-ACE-Konfiguration angepasst werden.
+`lv_dev.all` gewaehrt Zugriff auf alle Module. Gruppen bitte an die bestehende Lodge-V-ACE-Konfiguration anpassen.
 
-## Neu in 0.2.0
-- oxmysql wird explizit ueber das FiveM-Manifest eingebunden.
-- Zentrale Datenbankschnittstelle in `server/database.lua`.
-- Datenbank- und Schema-Pruefung beim Start und beim Panel-Aufruf.
-- Audit-Logging-Grundfunktion fuer Aktionen.
-- SQL-Schema fuer Audit, Blips, Fahrstuehle, Etagen, Logging, Webhooks, Teleports und Klingeln.
-- Versionsnummer auf 0.2.0 erhoeht.
+## CRUD-Callbacks in 0.3.0
 
-## Wichtige Hinweise
-- Das SQL-Schema legt nur neue `lv_dev_*`-Tabellen an und veraendert keine ESX- oder bestehenden Lodge-V-Tabellen.
-- `sql/schema.sql` muss vor der Nutzung importiert werden.
-- Die Datenbankfunktionen sind die Grundlage fuer die CRUD-Endpunkte im naechsten Entwicklungsschritt.
-- Die eigentlichen Modul-CRUDs und die NUI-Open-/Close-Anbindung sind noch nicht Bestandteil dieser Version.
-- Das ZIP enthaelt den bestehenden NUI-Build aus 0.1.0. Der React/TypeScript-Quellcode und die npm-Projektdateien waren im bereitgestellten ZIP nicht enthalten und wurden deshalb nicht rekonstruiert.
+Die serverseitigen ESX-Callbacks verwenden dieses Namensschema:
+
+- `lv_dev:server:<module>:list`
+- `lv_dev:server:<module>:create`
+- `lv_dev:server:<module>:update`
+- `lv_dev:server:<module>:delete`
+
+Unterstuetzte Module: `blipscreator`, `elevator`, `logging`, `teleport`, `klingel`.
+
+Jeder Callback prueft die passende ACE-Berechtigung serverseitig. Schreibaktionen werden ueber die Audit-Funktion protokolliert. Werte werden validiert und SQL-Werte parametrisiert. Tabellen- und Spaltennamen sind fest im Servercode definiert.
+
+Beispiel fuer einen Client-Aufruf:
+
+```lua
+ESX.TriggerServerCallback('lv_dev:server:blipscreator:list', function(result)
+    if not result or not result.success then
+        print(result and result.message or 'Unbekannter Fehler')
+        return
+    end
+
+    print(('Blips geladen: %s'):format(#result.data))
+end)
+```
+
+## Aktueller Funktionsumfang
+
+- Datenbankverbindung und erforderliche Tabellen werden geprueft.
+- Audit-Logging fuer Erstellen, Aktualisieren, Loeschen und verweigerte Zugriffe.
+- CRUD-Callbacks fuer Blips, Fahrstuhl-Stammdaten, Logging-Kategorien, Teleportpunkte und Klingeln.
+- Serverseitige ACE-Pruefung und Eingabevalidierung.
+
+## Noch nicht enthalten
+
+- NUI-Open-/Close-Anbindung und fertige React-Verwaltungsseiten.
+- Etagen-CRUD fuer Fahrstuehle.
+- Verwaltung mehrerer Webhooks je Logging-Kategorie.
+- Laufzeit-Integration der Datensaetze in die bestehenden Lodge-V-Ressourcen (Blips, Fahrstuhl, Klingel, Logging, Teleport). Die Tabellen allein aktivieren diese Funktionen nicht automatisch.
+
+
+
+## NUI-Verwaltung
+
+Das Panel wird ingame mit `/lvdev` geöffnet. Spieler sehen nur Module, für die sie eine passende ACE-Berechtigung besitzen. Die NUI-Anfragen werden über `client/nui.lua` an die ESX-Server-Callbacks weitergeleitet; die Berechtigungsprüfung findet bei jedem Lese- und Schreibzugriff erneut auf dem Server statt.
+
+Die gebaute NUI liegt in `web/dist`. Die React-/TypeScript-Quelldateien liegen in `web/src`.
+
+### NUI lokal bauen
+
+```bash
+cd web
+npm install
+npm run build
+```
+
+Danach muss `web/dist` zusammen mit der Ressource ausgeliefert werden. Die Ressource lädt die Dateien über `ui_page 'web/dist/index.html'`.
+
+### Ingame-Berechtigungen
+
+```cfg
+add_ace group.developer lv_dev.all allow
+# oder einzeln:
+add_ace group.developer lv_dev.blipscreator allow
+add_ace group.developer lv_dev.elevator allow
+add_ace group.developer lv_dev.logging allow
+add_ace group.developer lv_dev.teleport allow
+add_ace group.developer lv_dev.klingel allow
+```
+
+Die NUI verwaltet aktuell die Stammdatensätze der fünf Module. Fahrstuhl-Etagen und Logging-Webhooks sowie die Live-Übernahme in die separaten Lodge-V-Ressourcen folgen in weiteren Ausbaustufen.

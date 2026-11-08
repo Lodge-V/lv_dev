@@ -1,31 +1,23 @@
-const modules = [
-  { id: 'blipscreator', name: 'Blips Creator', description: 'Karten-Blips erstellen und verwalten', icon: '⌖' },
-  { id: 'elevator', name: 'Fahrstuhl', description: 'Gebäude, Etagen und Zugänge verwalten', icon: '⇅' },
-  { id: 'logging', name: 'Logging', description: 'Log-Kategorien und Ausgaben verwalten', icon: '▤' },
-  { id: 'teleport', name: 'Teleport', description: 'Teleportpunkte konfigurieren', icon: '↗' },
-  { id: 'klingel', name: 'Klingelsystem', description: 'Klingeln und Empfänger verwalten', icon: '♧' },
+import { useEffect, useState } from 'react';
+import type { FormEvent } from 'react';
+type Row = Record<string, any>;
+const defs = [
+{id:'blipscreator',name:'Blips Creator',icon:'⌖',fields:[['name','Name'],['sprite','Sprite','number'],['color','Farbe','number'],['scale','Größe','number'],['x','X','number'],['y','Y','number'],['z','Z','number'],['short_range','Nur in der Nähe','checkbox'],['enabled','Aktiviert','checkbox']]},
+{id:'elevator',name:'Fahrstuhl',icon:'⇅',fields:[['name','Name'],['description','Beschreibung'],['job_name','Benötigter Job'],['required_grade','Mindest-Rang','number'],['enabled','Aktiviert','checkbox']]},
+{id:'logging',name:'Logging',icon:'▤',fields:[['name','Name'],['event_key','Event-Schlüssel'],['description','Beschreibung'],['enabled','Aktiviert','checkbox']]},
+{id:'teleport',name:'Teleport',icon:'↗',fields:[['name','Name'],['x','X','number'],['y','Y','number'],['z','Z','number'],['heading','Heading','number'],['job_name','Benötigter Job'],['required_grade','Mindest-Rang','number'],['enabled','Aktiviert','checkbox']]},
+{id:'klingel',name:'Klingelsystem',icon:'♧',fields:[['name','Name'],['x','X','number'],['y','Y','number'],['z','Z','number'],['radius','Radius','number'],['cooldown_seconds','Cooldown','number'],['job_name','Empfänger-Job'],['enabled','Aktiviert','checkbox']]}
 ];
-
-export default function App() {
-  return (
-    <main className="shell">
-      <aside className="sidebar">
-        <div className="brand"><span className="brand-mark">LV</span><div><strong>LODGE V</strong><small>DEVELOPER PANEL</small></div></div>
-        <div className="nav-label">ÜBERSICHT</div>
-        <button className="nav-item active">▦ <span>Dashboard</span></button>
-        <div className="nav-label">MODULE</div>
-        {modules.map((module) => <button className="nav-item" key={module.id}>{module.icon} <span>{module.name}</span></button>)}
-        <div className="sidebar-footer">LODGE V · DEVELOPMENT</div>
-      </aside>
-      <section className="content">
-        <header className="topbar"><div><span className="eyebrow">SYSTEMVERWALTUNG</span><h1>Developer Panel</h1></div><div className="status"><i /> FRAMEWORK INITIALISIERT</div></header>
-        <section className="welcome"><div><span className="eyebrow orange">LODGE V DEVELOPMENT</span><h2>Zentrale Verwaltung</h2><p>Verwalte deine Entwicklungswerkzeuge und Servermodule an einem Ort.</p></div><div className="welcome-symbol">LV<span>.</span></div></section>
-        <div className="section-heading"><div><h3>Module</h3><p>Die Modulbereiche werden schrittweise aktiviert.</p></div><span className="count">05 MODULE GEPLANT</span></div>
-        <div className="module-grid">
-          {modules.map((module) => <article className="module-card" key={module.id}><div className="module-icon">{module.icon}</div><div className="module-copy"><h4>{module.name}</h4><p>{module.description}</p></div><span className="planned">GEPLANT</span></article>)}
-        </div>
-        <footer>LODGE V © 2026 <span>lv_dev · v0.1.0</span></footer>
-      </section>
-    </main>
-  );
+declare global { interface Window { GetParentResourceName?:()=>string } }
+async function call(action:string,p:Record<string,unknown>={}) { if(!window.GetParentResourceName) throw Error('Bitte im FiveM-Spiel öffnen.'); const r=await fetch(`https://${window.GetParentResourceName()}/request`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...p})});const j=await r.json();if(!j.success)throw Error(j.message||'Anfrage fehlgeschlagen');return j; }
+export default function App(){
+ const [open,setOpen]=useState(false),[allowed,setAllowed]=useState<string[]>([]),[active,setActive]=useState('dashboard'),[rows,setRows]=useState<Row[]>([]),[edit,setEdit]=useState<Row|null>(null),[search,setSearch]=useState(''),[message,setMessage]=useState('');
+ const mod=defs.find(x=>x.id===active);
+ useEffect(()=>{const listener=(e:MessageEvent)=>{if(e.data?.type==='open'){document.body.classList.add('nui-open');setAllowed(e.data.modules||[]);setActive('dashboard');setOpen(true)}if(e.data?.type==='close'){document.body.classList.remove('nui-open');setOpen(false)}};const key=(e:KeyboardEvent)=>{if(e.key==='Escape')void call('close').catch(()=>{});};window.addEventListener('message',listener);window.addEventListener('keydown',key);return()=>{window.removeEventListener('message',listener);window.removeEventListener('keydown',key)}},[]);
+ async function load(id=active){try{const r:any=await call('list',{module:id});setRows(r.data||[]);setMessage('')}catch(e){setMessage((e as Error).message);setRows([])}}
+ function nav(id:string){setActive(id);setEdit(null);setSearch('');if(id!=='dashboard')void load(id)}
+ async function save(e:FormEvent<HTMLFormElement>){e.preventDefault();if(!mod||!edit)return;const fd=new FormData(e.currentTarget),data:Row={};mod.fields.forEach(f=>data[f[0]]=f[2]==='checkbox'?fd.has(f[0]):f[2]==='number'?Number(fd.get(f[0])||0):String(fd.get(f[0])||''));try{await call(edit.id?'update':'create',{module:active,data:{...data,...(edit.id?{id:edit.id}:{})}});setEdit(null);setMessage('Gespeichert.');await load()}catch(e){setMessage((e as Error).message)}}
+ async function del(row:Row){if(!confirm('Eintrag wirklich löschen?'))return;try{await call('delete',{module:active,data:{id:row.id}});setMessage('Eintrag gelöscht.');await load()}catch(e){setMessage((e as Error).message)}}
+ if(!open)return null;
+ return <main className="shell"><aside className="sidebar"><div className="brand"><b className="brand-mark">LV</b><div><strong>LODGE V</strong><small>DEVELOPER PANEL</small></div></div><div className="nav-label">ÜBERSICHT</div><button className={'nav-item '+(active==='dashboard'?'active':'')} onClick={()=>nav('dashboard')}>▦ <span>Dashboard</span></button><div className="nav-label">MODULE</div>{defs.filter(m=>allowed.includes(m.id)).map(m=><button key={m.id} className={'nav-item '+(active===m.id?'active':'')} onClick={()=>nav(m.id)}>{m.icon} <span>{m.name}</span></button>)}<div className="sidebar-footer">LODGE V · DEVELOPMENT</div></aside><section className="content"><header className="topbar"><div><span className="eyebrow">SYSTEMVERWALTUNG</span><h1>{mod?.name||'Developer Panel'}</h1></div><button className="secondary" onClick={()=>void call('close')}>Schließen ✕</button></header>{mod?<><div className="toolbar"><input placeholder="Einträge durchsuchen..." value={search} onChange={e=>setSearch(e.target.value)}/><button className="primary" onClick={()=>setEdit({})}>＋ Neuer Eintrag</button></div>{message&&<p className="notice">{message}</p>}<div className="table-card"><div className="table-head"><h3>{mod.name} · {rows.length} Einträge</h3><button className="secondary" onClick={()=>void load()}>↻ Aktualisieren</button></div><div className="table-scroll"><table><thead><tr><th>ID</th>{mod.fields.slice(0,4).map(f=><th key={f[0]}>{f[1]}</th>)}<th>Status</th><th>Aktionen</th></tr></thead><tbody>{rows.filter(r=>JSON.stringify(r).toLowerCase().includes(search.toLowerCase())).map(r=><tr key={r.id}><td>#{r.id}</td>{mod.fields.slice(0,4).map(f=><td key={f[0]}>{String(r[f[0]]??'—')}</td>)}<td>{r.enabled?'Aktiv':'Inaktiv'}</td><td><button onClick={()=>setEdit(r)}>Bearbeiten</button> <button onClick={()=>void del(r)}>Löschen</button></td></tr>)}</tbody></table></div>{!rows.length&&<p className="empty">Keine Einträge vorhanden.</p>}</div></>:<><section className="welcome"><span className="eyebrow orange">LODGE V DEVELOPMENT</span><h2>Zentrale Verwaltung</h2><p>Wähle einen Modulbereich zur Verwaltung.</p></section><div className="module-grid">{defs.filter(m=>allowed.includes(m.id)).map(m=><button className="module-card" key={m.id} onClick={()=>nav(m.id)}><b>{m.icon}</b><span>{m.name}</span> →</button>)}</div></>}<footer>LODGE V © 2026 <span>lv_dev · v0.3.0</span></footer></section>{edit&&mod&&<div className="modal-backdrop"><form className="modal" onSubmit={save}><h2>{edit.id?'Eintrag bearbeiten':'Eintrag erstellen'}</h2><div className="form-grid">{mod.fields.map(f=><label key={f[0]}>{f[1]}{f[2]==='checkbox'?<input name={f[0]} type="checkbox" defaultChecked={!!edit[f[0]]}/>:<input name={f[0]} type={f[2]||'text'} step="any" required={f[0]==='name'||['x','y','z'].includes(f[0])} defaultValue={edit[f[0]]??''}/>}</label>)}</div><div className="modal-actions"><button type="button" className="secondary" onClick={()=>setEdit(null)}>Abbrechen</button><button className="primary">Speichern</button></div></form></div>}</main>
 }

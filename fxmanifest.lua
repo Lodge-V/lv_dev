@@ -5,7 +5,7 @@ lua54 'yes'
 name 'lv_dev'
 author 'Lodge V'
 description 'Zentrales Entwicklungs- und Verwaltungsframework fuer Lodge V'
-version '0.2.0'
+version '0.3.0'
 
 ui_page 'web/dist/index.html'
 
