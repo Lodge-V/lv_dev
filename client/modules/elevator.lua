@@ -1,0 +1,1 @@
+-- Fahrstuhl-Clientlogik folgt nach Sichtung und Integration der Bestandsressource.

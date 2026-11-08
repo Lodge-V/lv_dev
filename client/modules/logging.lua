@@ -1,0 +1,1 @@
+-- Logging-Verwaltung: Clientlogik folgt nach Integration der Bestandsressource.

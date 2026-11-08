@@ -1,0 +1,1 @@
+-- Teleport-Clientlogik folgt nach Integration der Bestandsressource.

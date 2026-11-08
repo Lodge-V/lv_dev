@@ -1,0 +1,1 @@
+-- Zentrale serverseitige Callback-/Event-Registrierung folgt.

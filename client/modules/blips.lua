@@ -1,0 +1,1 @@
+-- Blips-Creator Clientlogik folgt in einem spaeteren Schritt.

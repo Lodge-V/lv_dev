@@ -1,0 +1,1 @@
+-- Klingel-Clientlogik folgt nach Integration der Bestandsressource.
