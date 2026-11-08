@@ -11,20 +11,31 @@ permissions:
 jobs:
   build:
     name: Build FiveM Resource
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
 
-      - name: Install NUI Dependencies
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rsync zip
+
+      - name: Install Dependencies
         working-directory: web
-        run: npm install
+        run: npm ci
+
+      - name: TypeScript Check
+        working-directory: web
+        run: npx tsc --noEmit
 
       - name: Build NUI
         working-directory: web
@@ -45,7 +56,6 @@ jobs:
             --exclude='vite.config.ts'
 
           cd release/package
-
           zip -r "../lv_dev-${GITHUB_REF_NAME}.zip" lv_dev
 
       - name: Upload Release ZIP
