@@ -1,5 +1,21 @@
 local ESX = exports['es_extended']:getSharedObject()
 
+local function closePanel()
+    SetNuiFocus(false, false)
+    SendNUIMessage({ type = 'close' })
+end
+
+-- NUI darf beim Ressourcenstart niemals automatisch sichtbar sein.
+AddEventHandler('onClientResourceStart', function(resourceName)
+    if resourceName ~= GetCurrentResourceName() then return end
+    closePanel()
+end)
+
+AddEventHandler('onResourceStop', function(resourceName)
+    if resourceName ~= GetCurrentResourceName() then return end
+    SetNuiFocus(false, false)
+end)
+
 RegisterCommand(Config.Command, function()
     TriggerServerEvent('lv_dev:server:requestPanel')
 end, false)
