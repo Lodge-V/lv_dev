@@ -79,3 +79,34 @@ end)
 - Verwaltung mehrerer Webhooks je Logging-Kategorie.
 - Laufzeit-Integration der Datensaetze in die bestehenden Lodge-V-Ressourcen (Blips, Fahrstuhl, Klingel, Logging, Teleport). Die Tabellen allein aktivieren diese Funktionen nicht automatisch.
 
+
+
+## NUI-Verwaltung
+
+Das Panel wird ingame mit `/lvdev` geöffnet. Spieler sehen nur Module, für die sie eine passende ACE-Berechtigung besitzen. Die NUI-Anfragen werden über `client/nui.lua` an die ESX-Server-Callbacks weitergeleitet; die Berechtigungsprüfung findet bei jedem Lese- und Schreibzugriff erneut auf dem Server statt.
+
+Die gebaute NUI liegt in `web/dist`. Die React-/TypeScript-Quelldateien liegen in `web/src`.
+
+### NUI lokal bauen
+
+```bash
+cd web
+npm install
+npm run build
+```
+
+Danach muss `web/dist` zusammen mit der Ressource ausgeliefert werden. Die Ressource lädt die Dateien über `ui_page 'web/dist/index.html'`.
+
+### Ingame-Berechtigungen
+
+```cfg
+add_ace group.developer lv_dev.all allow
+# oder einzeln:
+add_ace group.developer lv_dev.blipscreator allow
+add_ace group.developer lv_dev.elevator allow
+add_ace group.developer lv_dev.logging allow
+add_ace group.developer lv_dev.teleport allow
+add_ace group.developer lv_dev.klingel allow
+```
+
+Die NUI verwaltet aktuell die Stammdatensätze der fünf Module. Fahrstuhl-Etagen und Logging-Webhooks sowie die Live-Übernahme in die separaten Lodge-V-Ressourcen folgen in weiteren Ausbaustufen.
