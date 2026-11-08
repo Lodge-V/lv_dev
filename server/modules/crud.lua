@@ -96,9 +96,6 @@ local function validate(definition, input, partial)
                 if rule.default ~= nil then
                     values[key] = rule.default
                     columns[#columns + 1] = key
-                elseif rule.nullable then
-                    values[key] = nil
-                    columns[#columns + 1] = key
                 end
             end
         else
@@ -113,7 +110,6 @@ local function validate(definition, input, partial)
                 if #value > rule.max then
                     return nil, nil, ('Wert zu lang: %s'):format(key)
                 end
-                if rule.nullable and value == '' then value = nil end
             elseif rule.kind == 'boolean' then
                 if value ~= true and value ~= false and value ~= 0 and value ~= 1 then
                     return nil, nil, ('Ungueltiger Wert: %s'):format(key)
@@ -278,6 +274,7 @@ end
 
 CreateThread(function()
     while GetResourceState('es_extended') ~= 'started' do Wait(250) end
+    local ESX = exports['es_extended']:getSharedObject()
     for moduleName, definition in pairs(Modules) do
         registerModule(moduleName, definition)
     end
