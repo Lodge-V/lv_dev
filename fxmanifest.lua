@@ -5,7 +5,7 @@ lua54 'yes'
 name 'lv_dev'
 author 'Lodge V'
 description 'Zentrales Entwicklungs- und Verwaltungsframework fuer Lodge V'
-version '0.1.0'
+version '0.2.0'
 
 ui_page 'web/dist/index.html'
 
@@ -20,17 +20,19 @@ shared_scripts {
     'shared/locales.lua'
 }
 
-client_scripts {
-    'client/main.lua',
-    'client/nui.lua',
-    'client/modules/*.lua'
-}
-
 server_scripts {
+    '@oxmysql/lib/MySQL.lua',
+    'server/database.lua',
     'server/main.lua',
     'server/permissions.lua',
     'server/callbacks.lua',
     'server/modules/*.lua'
+}
+
+client_scripts {
+    'client/main.lua',
+    'client/nui.lua',
+    'client/modules/*.lua'
 }
 
 dependencies {

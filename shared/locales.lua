@@ -1,8 +1,9 @@
 Locales = {
     de = {
         no_permission = 'Du hast keine Berechtigung fuer dieses System.',
-        panel_opened = 'lv_dev wird vorbereitet.',
-        panel_closed = 'Entwicklerpanel geschlossen.'
+        panel_opened = 'Datenbankverbindung erfolgreich. Das Panel wird im naechsten Schritt aktiviert.',
+        panel_closed = 'Entwicklerpanel geschlossen.',
+        database_unavailable = 'Die lv_dev-Datenbank ist nicht eingerichtet oder nicht erreichbar.'
     }
 }
 
