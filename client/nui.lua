@@ -1,3 +1,5 @@
+local ESX = exports['es_extended']:getSharedObject()
+
 local allowedActions = { list = true, create = true, update = true, delete = true }
 
 RegisterNUICallback('request', function(data, cb)
